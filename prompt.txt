@@ -1,0 +1,63 @@
+# GameDay Hub — Final Pitch
+
+## The Problem
+Anyone who's traveled for a youth sports tournament knows the chaos: parents scattered across five different group texts, nobody's sure which hotel block is the "team" one, forty families descend on the same restaurant at once, schedules shift last-minute because of weather or a blowout game ending early, and once you're at a sprawling multi-field complex, good luck finding your own team's sideline. There's no single place that combines *what's happening right now*, *what you need around you*, and *where your people actually are*.
+
+## The Product
+
+**1. Live Event Feed**
+A real-time, tournament-scoped feed — score updates, field/time changes, weather delays — so parents aren't hunting through a group chat for the one message that matters.
+
+**2. Group-Up / Tournament Squads**
+Coaches or team parents spin up a "squad" for a tournament and invite families. Each squad gets its own filtered feed, a shared logistics hub, and a live map of squad members.
+
+**3. Nearby Logistics Layer**
+Pulled live via a Places API: hotels, restaurants, gyms, pharmacies, urgent care — sorted by distance and price near the venue.
+
+**4. Live Location Sharing**
+Opt-in, squad-scoped, and automatically time-boxed to the tournament weekend — not a permanent location leash, which matters a lot for parent trust and privacy.
+
+## New: The Features That Boost Practicality *and* Technical Complexity
+
+**5. Smart Schedule Engine (the real technical core)**
+Youth tournaments run on elimination brackets that shift constantly — a blowout ends early, a game gets rained out, a field gets swapped. Build a live bracket-state engine that:
+- Ingests schedule changes (manual entry or scraped from common tournament platforms like TourneyMachine/Exposure Events)
+- Recalculates downstream game times automatically (if Game 3 ends 20 min early, it cascades and re-predicts Game 4/5 start times using historical average game-duration data)
+- Pushes a targeted alert *only* to squads actually affected — not a blast to everyone
+
+This is a genuine algorithmic problem — bracket-dependency modeling plus predictive time-estimation — not just an API call, and it's the single most useful feature for a parent standing in a parking lot wondering if they have time to grab lunch.
+
+**6. Crowd-Spreading Recommendation Engine**
+Instead of just listing nearby restaurants, use anonymized, aggregated check-in data from squads at the same tournament to detect when a spot is getting saturated and nudge new searchers toward comparable alternatives. This is a lightweight but real optimization/load-balancing problem — directly boosts technical complexity without expanding scope much, and it's a genuinely novel feature none of the "TeamSnap-style" competitors have.
+
+**7. Emergency/Medical Quick-Access Card**
+Each athlete profile can hold an optional, parent-controlled card with allergies, emergency contacts, and insurance info, visible instantly to a coach or trainer in a medical situation — no hunting through paperwork. Low technical lift, but a serious practicality and "we thought about the worst-case scenario" signal to judges.
+
+**8. Post-Game Auto-Digest**
+At the end of each day, auto-generate a one-glance summary per squad: final scores, tomorrow's first game time, and any logistics notes (hotel checkout reminders, etc.) — a small NLP/templating task that makes the product feel finished and polished in a demo.
+
+## Differentiation Story (answers the judges' "why not TeamSnap?")
+Existing team-management apps (TeamSnap, GameChanger, SportsEngine) handle rosters and scores but have **no location sharing, no local logistics, and no dynamic schedule-cascade prediction** — they show you the schedule as originally printed, not as it's actually unfolding. Consumer travel apps (Google Maps, Yelp) have logistics but no idea a tournament bracket even exists. GameDay Hub is the only layer that understands *both* the sports structure and the physical realities of a travel weekend simultaneously.
+
+## Technical Build Summary
+- **Maps/Places:** Google Places API (hotels, restaurants, gyms) near venue coordinates
+- **Live feed:** WebSocket-based, scoped by tournament/squad ID
+- **Location sharing:** Browser Geolocation API + Google Maps JS SDK, auto-expiring
+- **Schedule Engine:** Rules-based cascading recalculation model, seeded with historical game-duration data (this is your technical centerpiece — a real algorithm, demoable, explainable)
+- **Crowd engine:** Simple aggregation + threshold-based nudging logic
+- **Medical card:** Encrypted, parent-permissioned data field
+- **Auto-digest:** Lightweight templated summary generation
+
+## Updated Grade
+
+| Criterion | Grade | Why |
+|---|---|---|
+| **Creativity** | A- | The Schedule Engine and Crowd-Spreading Engine are genuinely novel combinations no direct competitor offers — you can now name the gap and fill it specifically. |
+| **Technical Complexity** | A- | The cascading schedule-prediction model is real algorithmic work (dependency graphs + predictive estimation), not just API orchestration. This was your weakest category before — it's now a strength. |
+| **Practicality** | A | Every feature maps to a lived, specific pain point, and the medical card + auto-expiring location sharing show real thoughtfulness about trust and safety, which judges notice. |
+| **Presentation** | Strong potential — one clean sentence pitch, with the Schedule Engine as your "wow" live demo moment (show a game ending early and watch downstream times auto-update and notify). |
+| **Design** | Strong potential — three-surface dashboard (feed / logistics / map) with a clear "today at a glance" view is very demoable in the time you'll have. |
+
+### Overall estimated grade: **A- / A**
+
+The single highest-leverage thing you can do before the demo: build the Schedule Engine cascade as a **live, visible demo moment** — end a mock game early on stage and watch the whole squad's schedule and notifications update in real time. That's the moment that turns "nice idea" into "wow, that's genuinely hard and genuinely useful," which is exactly what separates an A from a B in the room.
