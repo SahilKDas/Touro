@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { MapContainer, TileLayer, Marker, Popup, ZoomControl, useMap } from "react-leaflet";
+import { useEffect, useState } from "react";
+import { MapContainer, TileLayer, Marker, Popup, Polyline, ZoomControl, useMap } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 
@@ -24,9 +24,25 @@ const venues: Venue[] = [
   { id: "hampton", label: "Hampton Inn & Suites", sub: "0.3 mi · $189/night · 6 squad families", kind: "hotel", lat: 33.8038, lng: -117.9241 },
   { id: "courtyard", label: "Courtyard by Marriott", sub: "0.6 mi · $215/night · 3 squad families", kind: "hotel", lat: 33.8044, lng: -117.9219 },
   { id: "bestwestern", label: "Best Western Plus", sub: "0.9 mi · $149/night · 2 squad families", kind: "hotel", lat: 33.7998, lng: -117.9256 },
+  { id: "residenceinn", label: "Residence Inn by Marriott", sub: "1.0 mi · $199/night · 4 squad families", kind: "hotel", lat: 33.8055, lng: -117.9255 },
+  { id: "holidayinn", label: "Holiday Inn Express", sub: "1.2 mi · $159/night · 3 squad families", kind: "hotel", lat: 33.7985, lng: -117.9225 },
+  { id: "hiltongarden", label: "Hilton Garden Inn", sub: "0.8 mi · $229/night · 5 squad families", kind: "hotel", lat: 33.8035, lng: -117.92 },
+  { id: "laquinta", label: "La Quinta Inn & Suites", sub: "1.4 mi · $129/night · 2 squad families", kind: "hotel", lat: 33.7975, lng: -117.927 },
+  { id: "springhill", label: "SpringHill Suites by Marriott", sub: "0.7 mi · $209/night · 3 squad families", kind: "hotel", lat: 33.8042, lng: -117.9203 },
+  { id: "homewood", label: "Homewood Suites by Hilton", sub: "1.1 mi · $219/night · 2 squad families", kind: "hotel", lat: 33.7988, lng: -117.9208 },
+  { id: "extendedstay", label: "Extended Stay America", sub: "1.6 mi · $139/night · 1 squad family", kind: "hotel", lat: 33.8065, lng: -117.9265 },
+  { id: "motel6", label: "Motel 6", sub: "1.8 mi · $89/night · 1 squad family", kind: "hotel", lat: 33.7955, lng: -117.9285 },
   { id: "tacomesa", label: "Taco Mesa", sub: "Team lunch · Table for 12", kind: "food", lat: 33.802, lng: -117.9244 },
   { id: "fieldhouse", label: "Fieldhouse Café", sub: "Coffee · Sandwiches · 0.7 mi", kind: "food", lat: 33.804, lng: -117.921 },
   { id: "parkside", label: "Parkside Grill", sub: "American · Patio · 1.1 mi", kind: "food", lat: 33.8007, lng: -117.9203 },
+  { id: "pizzapress", label: "Pizza Press", sub: "Build your own · 0.5 mi", kind: "food", lat: 33.8018, lng: -117.9255 },
+  { id: "innout", label: "In-N-Out Burger", sub: "Burgers · 1.3 mi", kind: "food", lat: 33.799, lng: -117.9195 },
+  { id: "panera", label: "Panera Bread", sub: "Sandwiches · Bakery-café · 0.6 mi", kind: "food", lat: 33.8048, lng: -117.9235 },
+  { id: "sushiboat", label: "Sushi Boat", sub: "Japanese · Sushi · 1.5 mi", kind: "food", lat: 33.797, lng: -117.921 },
+  { id: "chickfila", label: "Chick-fil-A", sub: "Chicken · Fast food · 0.5 mi", kind: "food", lat: 33.8005, lng: -117.9265 },
+  { id: "olivegarden", label: "Olive Garden", sub: "Italian · Sit-down · 1.2 mi", kind: "food", lat: 33.7965, lng: -117.9245 },
+  { id: "starbucks", label: "Starbucks", sub: "Coffee · 0.3 mi", kind: "food", lat: 33.8032, lng: -117.9218 },
+  { id: "habit", label: "The Habit Burger Grill", sub: "Burgers · Fast casual · 0.9 mi", kind: "food", lat: 33.8058, lng: -117.9225 },
   { id: "parking", label: "Lot C Parking", sub: "5 min walk · $10/day", kind: "parking", lat: 33.8012, lng: -117.9247 },
   { id: "hq", label: "Tournament HQ · First Aid", sub: "Field 1 entrance", kind: "hq", lat: 33.8028, lng: -117.9231 },
 ];
@@ -38,6 +54,31 @@ const VENUE_META: Record<Venue["kind"], { color: string; glyph: string }> = {
   parking: { color: "#b8860b", glyph: "🅿️" },
   hq: { color: "#dc2626", glyph: "⛑️" },
 };
+
+function haversineMiles(lat1: number, lng1: number, lat2: number, lng2: number): number {
+  const R = 3958.8;
+  const toRad = (d: number) => (d * Math.PI) / 180;
+  const dLat = toRad(lat2 - lat1);
+  const dLng = toRad(lng2 - lng1);
+  const a = Math.sin(dLat / 2) ** 2 + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) ** 2;
+  return R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)));
+}
+
+function RouteLine({ from, to }: { from: [number, number]; to: [number, number] }) {
+  const map = useMap();
+
+  useEffect(() => {
+    map.fitBounds([from, to], { padding: [70, 70], maxZoom: 16 });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [from[0], from[1], to[0], to[1]]);
+
+  return (
+    <>
+      <Polyline positions={[from, to]} pathOptions={{ color: "#ffffff", weight: 9, opacity: 0.9, lineCap: "round" }} />
+      <Polyline positions={[from, to]} pathOptions={{ color: "#007aff", weight: 5, opacity: 0.95, lineCap: "round" }} />
+    </>
+  );
+}
 
 function personIcon(p: Person) {
   const pulse = p.you
@@ -121,11 +162,32 @@ const TILES = {
   satellite: { url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", attr: "Tiles &copy; Esri" },
 };
 
-export default function SquadMap({ expanded = false }: { expanded?: boolean }) {
+export default function SquadMap({
+  expanded = false,
+  onVenueSelect,
+  directionsTo,
+  onDirections,
+  onClearDirections,
+}: {
+  expanded?: boolean;
+  onVenueSelect?: (id: string) => void;
+  directionsTo?: string | null;
+  onDirections?: (id: string) => void;
+  onClearDirections?: () => void;
+}) {
   const [tile, setTile] = useState<"street" | "satellite">("street");
+  const you = people.find((p) => p.you);
+  const target = directionsTo ? venues.find((v) => v.id === directionsTo) : undefined;
+  const distanceMi = you && target ? haversineMiles(you.lat, you.lng, target.lat, target.lng) : null;
 
   return (
     <div className={`squad-map ${expanded ? "expanded" : ""}`}>
+      {target && distanceMi !== null && (
+        <div className="map-directions-banner">
+          <span>Directions to <strong>{target.label}</strong> · {distanceMi.toFixed(1)} mi</span>
+          {onClearDirections && <button onClick={onClearDirections} aria-label="Clear directions">✕</button>}
+        </div>
+      )}
       <MapContainer
         center={CENTER}
         zoom={16}
@@ -138,9 +200,18 @@ export default function SquadMap({ expanded = false }: { expanded?: boolean }) {
         <ZoomControl position="topright" />
         <LocateControl />
         <SatelliteToggle satellite={tile === "satellite"} onToggle={() => setTile((t) => (t === "street" ? "satellite" : "street"))} />
+        {you && target && <RouteLine from={[you.lat, you.lng]} to={[target.lat, target.lng]} />}
         {venues.map((v) => (
           <Marker key={v.id} position={[v.lat, v.lng]} icon={venueIcon(v)}>
-            <Popup><strong>{v.label}</strong><br />{v.sub}</Popup>
+            <Popup>
+              <strong>{v.label}</strong><br />{v.sub}
+              {(v.kind === "hotel" || v.kind === "food") && onVenueSelect && (
+                <><br /><button className="map-popup-btn" onClick={() => onVenueSelect(v.id)}>View details →</button></>
+              )}
+              {onDirections && (
+                <><br /><button className="map-popup-btn" onClick={() => onDirections(v.id)}>Directions →</button></>
+              )}
+            </Popup>
           </Marker>
         ))}
         {people.map((p) => (
